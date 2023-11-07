@@ -1,0 +1,523 @@
+---
+title: "Factor Analysis (Wave 1) -- Dads Matter"
+author: "Michael Wu"
+date: "2023-10-24"
+output: 
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+      toc_selector: "#toc"
+      width: 300px
+      align: left
+    css: styles.css
+---
+
+<style>
+body {
+  font-size: 16px;
+}
+</style>
+
+# Recommendations
+
+- MOTHER AND FATHER INVOLVEMENT WITH INFANT (`mfi`): Good CFA fit and use factor scores generated from CFA model
+
+- PARENT-CHILD CONFLICT TACTICS SCALES (`pccts`): Use scoring rule and sum scores (The midpoints are the same as the response category numbers for categories 0, 1, and 2. For category 3 (3–5 times) the midpoint is 4, for category 4 (6–10 times) it is 8, for category 5 (11–20 times) it is 15, and for category 6 (More than 20 times in the past year) we suggest using 25 as the midpoint.)
+
+- CHILD NEGLECT (`neg`): Use sum scores
+
+- DEPRESSION: CIDI-SF: Use scoring rules (*unclear which version we are using*)
+
+- PARENTING ALLIANCE INVENTORY (`pai`):
+  
+  - Mother's self-report: Questionable CFA model fit
+  - Father's self-report: Good CFA fit and use factor score
+  
+- RELATIONSHIP QUALITY (`rq`): Good CFA fit and use factor score
+
+- CONFLICT TACTICS SCALE (`cts`): Use item-pair sum/average score
+
+# Introduction
+
+**Evidence of construct validity:**
+
+- We conducted Confirmatory Factor Analysis (CFA) to test the factor structure of measures with a theoretical justification of certain factor structures (based on Aaron's suggestions).
+
+- In all models, a good model fit is determined using Hu and Bentler’s (1999) criteria: RMSEA (Root Mean Square Error Of Approximation) < 0.06, CFI (Comparative Fit Index) < 0.95, TLI (Tucker–Lewis Index) < 0.95, SRMR (Standardized Root Mean Squared Residual) < 0.08.
+
+**Evidence of internal consistency:**
+
+- Cronbach's Alpha (α) is a measure of internal consistency reliability that assesses the extent to which items within a test or questionnaire are inter-related, calculated as the mean of all possible split-half reliabilities, corrected for test length.
+
+- McDonald’s Omega (ω) is a measure of internal consistency reliability based on the factor structure of the test, calculated by decomposing the total variance of the items into the variance due to a general factor, the variance due to group factors, and the unique variance, providing a more accurate estimate of reliability when the assumption of unidimensionality is violated.
+
+- Simply put, α is computed based on the raw data, and ω is computed from the CFA. In practice, we would often want to calculate a reliability coefficient for each subscale at each wave when we build a multi-factor CFA, besides a general reliability coefficient for the entire construct.
+
+# Data Preparation
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warnings = F, message = F)
+```
+
+```{r}
+# load library
+library(tidyverse)
+library(lavaan)
+library(psych)
+source(here::here("R/functions.R"))
+
+# manually change this to the box path on your computer if using Windows
+box_path <- "~/Library/CloudStorage/Box-Box/Dads Matter Project"
+
+# load data
+dat_s <- read_csv(file.path(box_path, "Data analysis/data/dads_matter_fa.csv"))
+```
+
+**\_m: mother report**
+
+**\_f: father report**
+
+# MOTHER AND FATHER INVOLVEMENT WITH INFANT
+
+Based on modification indices, for all four models below (father/mother report on self or other parent's involvement), we added the following residual covariance terms to the latent factor model. The reason to add these terms are:
+
+- There might be a theoretical reason to believe that two indicators share variance above and beyond what is explained by the latent factors.
+
+- Modifications to the CFA models improved their fit to the data.
+
+Specifically, we added residual covariance between `mfi3` (Read stories to (CHILD)) and `mfi4` (Tell stories to (CHILD)) because of the literal similarity between the two items.
+
+We also added a residual covariance between `mfi7` (Hug or show physical affection to (CHILD)) and `mfi8` (Put (CHILD) to bed) because both actions involve physical affection.
+
+## Father's involvement with children (reported by mothers)
+
+```{r}
+cfa_mfi_m <- '
+  mfi_m_1 =~ mfi1.1_1 + mfi2.1_1 + mfi3.1_1 + mfi4.1_1 + 
+           mfi5.1_1 + mfi6.1_1 + mfi7.1_1 + mfi8.1_1
+           
+  mfi3.1_1 ~~ mfi4.1_1 
+  mfi7.1_1 ~~ mfi8.1_1 
+'
+  
+fit_mfi_m <- cfa(cfa_mfi_m, 
+                 data = dat_s,
+                 std.lv = TRUE, missing = "FIML",
+                 parameterization = "theta"
+                 )
+```
+
+<details>
+  <summary><strong>Click to see full model results:</strong></summary>
+```{r}
+summary(fit_mfi_m, fit.measures = TRUE, standardized = TRUE)
+# modindices(fit_mfi_m, sort = TRUE, maximum.number = 5)
+```
+</details>
+
+**Reliability:**
+
+```{r}
+get_rel(model = fit_mfi_m,
+        data = dat_s |> select(mfi1.1_1:mfi8.1_1))
+```
+
+
+## Mother's involvement with children (reported by mothers)
+
+```{r}
+cfa_mfia_m <- '
+  mfia_m_1 =~ mfi1a.1_1 + mfi2a.1_1 + mfi3a.1_1 + mfi4a.1_1 + 
+           mfi5a.1_1 + mfi6a.1_1 + mfi7a.1_1 + mfi8a.1_1
+           
+  mfi3a.1_1 ~~ mfi4a.1_1  
+  mfi7a.1_1 ~~ mfi8a.1_1
+'
+  
+fit_mfia_m <- cfa(cfa_mfia_m, 
+                 data = dat_s,
+                 std.lv = TRUE, missing = "FIML",
+                 parameterization = "theta"
+                 )
+```
+
+<details>
+  <summary><strong>Click to see full model results:</strong></summary>
+```{r}
+summary(fit_mfia_m, fit.measures = TRUE, standardized = TRUE)
+# modindices(fit_mfia_m, sort = TRUE, maximum.number = 5)
+```
+</details>
+
+**Reliability:**
+
+```{r}
+get_rel(model = fit_mfia_m,
+        data = dat_s |> select(mfi1a.1_1:mfi8a.1_1))
+```
+
+## Mother's involvement with children (reported by fathers)
+
+```{r}
+cfa_mfi_f <- '
+  mfi_f_1 =~ mfi1.2_1 + mfi2.2_1 + mfi3.2_1 + mfi4.2_1 + 
+           mfi5.2_1 + mfi6.2_1 + mfi7.2_1 + mfi8.2_1
+           
+  mfi3.2_1 ~~ mfi4.2_1  
+  mfi7.2_1 ~~ mfi8.2_1
+'
+  
+fit_mfi_f <- cfa(cfa_mfi_f, 
+                 data = dat_s,
+                 std.lv = TRUE, missing = "FIML",
+                 parameterization = "theta"
+                 )
+```
+
+<details>
+  <summary><strong>Click to see full model results:</strong></summary>
+```{r}
+summary(fit_mfi_f, fit.measures = TRUE, standardized = TRUE)
+# modindices(fit_mfi_f, sort = TRUE, maximum.number = 5)
+```
+</details>
+
+**Reliability:**
+
+```{r}
+get_rel(model = fit_mfi_f,
+        data = dat_s |> select(mfi1.2_1:mfi8.2_1))
+```
+
+## Mother's involvement with children (reported by fathers)
+
+```{r}
+cfa_mfia_f <- '
+  mfia_f_1 =~ mfi1a.2_1 + mfi2a.2_1 + mfi3a.2_1 + mfi4a.2_1 + 
+           mfi5a.2_1 + mfi6a.2_1 + mfi7a.2_1 + mfi8a.2_1
+           
+  mfi3a.2_1 ~~ mfi4a.2_1  
+  mfi7a.2_1 ~~ mfi8a.2_1
+'
+  
+fit_mfia_f <- cfa(cfa_mfia_f, 
+                 data = dat_s,
+                 std.lv = TRUE, missing = "FIML",
+                 parameterization = "theta"
+                 )
+```
+
+<details>
+  <summary><strong>Click to see full model results:</strong></summary>
+```{r}
+summary(fit_mfia_f, fit.measures = TRUE, standardized = TRUE)
+# modindices(fit_mfia_f, sort = TRUE, maximum.number = 5)
+```
+</details>
+
+**Reliability:**
+
+```{r}
+get_rel(model = fit_mfia_f,
+        data = dat_s |> select(mfi1a.2_1:mfi8a.2_1))
+```
+
+# PARENT-CHILD CONFLICT TACTICS SCALES
+
+Straus, M. A., Hamby, S. L., Finkelhor, D., Moore, D. W., & Runyan, D. (1998). Identification of child maltreatment with the Parent-Child Conflict Tactics Scales: Development and psychometric data for a national sample of American parents. Child abuse & neglect, 22(4), 249-270. https://doi.org/10.1016/S0145-2134(97)00174-9
+
+This scale has existing scoring rules (https://emerge.ucsd.edu/r_3dl0y438y6yhvyo/):
+
+The scale is scored by adding the midpoints for the response categories chosen by the participant. The midpoints are the same as the response category numbers for categories 0, 1, and 2. For category 3 (3–5 times) the midpoint is 4, for category 4 (6–10 times) it is 8, for category 5 (11–20 times) it is 15, and for category 6 (More than 20 times in the past year) we suggest using 25 as the midpoint.
+
+As described in the original paper, some events measured by the scale are very rare, thus resulting a very skewed distribution: "The extremely skewed distributions drastically lower the correlation between the items and reduces alpha because alpha is a function of the size of the correlations between items. In addition the severe assault items do not meet other assumptions such as equal variance." Therefore, we are following the original recommended scoring rules instead of building new CFAs on this established measure (which failed to build due to highly skewed data).
+
+```{r}
+dat_s <- dat_s |> 
+  mutate(
+    across(starts_with("pccts"), ~ case_when(
+      .x == 3  ~ 4,
+      .x == 4  ~ 8,
+      .x == 5  ~ 15,
+      .x == 6  ~ 25,
+      TRUE     ~ .x
+    ))
+  )
+```
+
+# CHILD NEGLECT
+
+For this measure, the CFA models also failed to build due to highly skewed data. I am not sure what the original paper is and what it suggests, but similar to PCCTS, we can take a sum of these variables as the total instances of child neglect, instead of treating it as a latent construct.
+
+# DEPRESSION: CIDI-SF
+
+This scale has conditional questions that prompt you to skip a few questions based on your choice in previous questions. Therefore, some later questions only have very few respondent, so CFA is not a good option for this scale.
+
+According to the manual, there are two ways of scoring the scale: https://www.hcp.med.harvard.edu/ncs/ftpdir/cidisf_readme.pdf
+
+Kessler, R. C., Andrews, G., Mroczek, D., Ustun, B., & Wittchen, H. U. (1998). The World Health Organization composite international diagnostic interview short‐form (CIDI‐SF). International journal of methods in psychiatric research, 7(4), 171-185.
+
+But I am not sure why there are 13 items in our study. Past studies seem to suggest 6-item or 10-item versions.
+
+# PARENTING ALLIANCE INVENTORY
+
+## Mother's self-report parenting alliance with father
+
+Based on Aaron's notes, there seem to be two theory-based factors for this measure: alliance with partner and shared alliance. However, the CFA model for mother's self-report does not have acceptable fit indices and data-driven modification indices do not seem to suggest theoretically sound alternative links.
+
+```{r}
+# Theory-based 2-factor model does not fit well and there is no theoretical justification for the links suggested by modification indices
+
+cfa_pai_m <- '
+  pai_shared_m_1 =~ pai5.1_1 + pai7.1_1 + pai9.1_1 + pai12.1_1 + pai17.1_1 + pai23.1_1 + pai24.1_1 + pai25.1_1
+  pai_partner_m_1 =~ pai13.1_1 + pai14.1_1 + pai19.1_1 + pai20.1_1 + pai21.1_1 + pai27.1_1 + pai27.1_1 + pai28.1_1 + pai29.1_1
+'
+
+
+fit_pai_m <- cfa(cfa_pai_m, 
+                 data = dat_s,
+                 std.lv = TRUE, missing = "FIML",
+                 parameterization = "theta"
+                 )
+```
+
+<details>
+  <summary><strong>Click to see full model results:</strong></summary>
+```{r}
+summary(fit_pai_m, fit.measures = TRUE, standardized = TRUE)
+# modindices(fit_pai_m, sort = TRUE, maximum.number = 5)
+```
+</details>
+
+We then re-conducted an EFA model to explore the potential factor structure. Based on the eigenvalues, 2-factor model seems to be a better solution.
+
+```{r}
+vec <- grep("^pai\\d+\\.1_1$", names(dat_s), value = T)
+
+# Extract numbers using regular expression
+numbers <- as.numeric(gsub("pai([0-9]+)\\..*", "\\1", vec))
+
+# Order the vector based on the extracted numbers
+sorted_vec <- vec[order(numbers)]
+
+efa_pai_m <- lavaan::efa(dat_s, 
+                 ov.names = sorted_vec,
+                 nfactors = 1:3
+                 )
+```
+
+```{r}
+# Eigenvalues extracted from the fitted lavaan EFA model
+eigenvalues <- c(9.112, 1.240, 0.993, 0.780, 0.725, 0.574, 0.511, 0.467, 0.414, 0.397, 0.350, 0.327, 0.303, 0.275, 0.216, 0.167, 0.149)
+
+# Create a Scree Plot
+plot(eigenvalues, type = "b", pch = 19, main = "Scree Plot",
+     xlab = "Factor Number", ylab = "Eigenvalue", col = "blue",
+     cex.lab = 1.2, cex.axis = 1.2, cex.main = 1.5)
+
+# Add a reference line at y = 1
+abline(h = 1, col = "red", lty = 2)
+```
+
+<details>
+  <summary><strong>Click to see full model results:</strong></summary>
+```{r}
+# model stats
+summary(efa_pai_m)
+```
+</details>
+
+The EFA suggested 2-factor model has a slightly better and acceptable fit, as well as good reliability. However, I couldn't find common theoretical grounds for the suggested factors.
+
+```{r}
+cfa_pai_m <- '
+  pai_f1_m_1 =~ pai5.1_1 + pai7.1_1 + pai14.1_1 + pai20.1_1 + pai27.1_1 + pai29.1_1
+  
+  pai_f2_m_1 =~ pai9.1_1 + pai12.1_1 + pai13.1_1 + pai17.1_1 + pai19.1_1 + pai21.1_1 + pai23.1_1 + pai24.1_1 + pai25.1_1 + pai26.1_1 + pai28.1_1
+  
+  pai13.1_1 ~~ pai19.1_1
+'
+
+
+fit_pai_m <- cfa(cfa_pai_m, 
+                 data = dat_s,
+                 std.lv = TRUE, missing = "FIML",
+                 parameterization = "theta"
+                 )
+```
+
+<details>
+  <summary><strong>Click to see full model results:</strong></summary>
+```{r}
+summary(fit_pai_m, fit.measures = TRUE, standardized = TRUE)
+# modindices(fit_pai_m, sort = TRUE, maximum.number = 5)
+```
+</details>
+
+**Reliability:**
+
+```{r}
+get_rel(model = fit_pai_m,
+        data = dat_s |> select(pai7.1_1:pai28.1_1))
+```
+  
+Given this situation, we may consider the following:
+
+Try to justify the following relationship (beyond what the latent factor structure accounts for). Adding these residual covariances improves the model fit to acceptable (although not great).
+
+- pai13.1_1 (I believe my child’s father is a good parent.) ~~ pai19.1_1 (My child’s father cares about our child.)
+
+- pai5.1_1 (My child’s father sees our child in the same way I do.) ~~ pai24.1_1 (Talking to my child’s father about our child is something I look forward to.)
+
+- pai20.1_1 (I feel good about my child’s father’s judgment about what is right for our child.) ~~ pai29.1_1 (My child’s father knows how to manage children well.)
+
+
+## Father's self-report parenting alliance with mothers
+
+In contrast to mother's self-report, father's self-report fits acceptably, and the fit improves adding the following residual covariance terms.
+
+- pai13.1_1 (I believe my child’s father is a good parent.) ~~ pai19.1_1 (My child’s father cares about our child.)
+
+- pai9.2_1 (My child’s father and I agree on what our child should and should not be permitted to do.) ~~ pai20.2_1 (I feel good about my child’s father’s judgment about what is right for our child.)
+
+```{r}
+cfa_pai_f <- '
+  pai_shared_m_1 =~ pai5.2_1 + pai7.2_1 + pai9.2_1 + pai12.2_1 + pai17.2_1 + pai23.2_1 + pai24.2_1 + pai25.2_1
+  pai_partner_m_1 =~ pai13.2_1 + pai14.2_1 + pai19.2_1 + pai20.2_1 + pai21.2_1 + pai27.2_1 + pai27.2_1 + pai28.2_1 + pai29.2_1
+  
+  pai13.2_1 ~~ pai19.2_1
+  pai9.2_1 ~~ pai20.2_1
+'
+
+
+fit_pai_f <- cfa(cfa_pai_f, 
+                 data = dat_s,
+                 std.lv = TRUE, missing = "FIML",
+                 parameterization = "theta"
+                 )
+```
+
+<details>
+  <summary><strong>Click to see full model results:</strong></summary>
+```{r}
+summary(fit_pai_f, fit.measures = TRUE, standardized = TRUE)
+# modindices(fit_pai_f, sort = TRUE, maximum.number = 5)
+```
+</details>
+  
+**Reliability:**
+
+```{r}
+get_rel(model = fit_pai_f,
+        data = dat_s |> select(pai7.2_1:pai28.2_1))
+```
+
+# RELATIONSHIP QUALITY
+
+Both mother's and father's report of relationship quality has acceptable fit (2-factor model with support and abuse as subscales), without any tweaks to the CFA model.
+
+## Mother's report on how father behaves to her
+
+```{r}
+cfa_rq_m <- '
+  rq_support_m_1 =~ rq1.1_1 + rq2.1_1 + rq4.1_1 + rq8.1_1 + rq9.1_1
+  rq_abuse_m_1 =~ rq3.1_1 + rq5.1_1 + rq6.1_1 + rq7.1_1
+'
+
+fit_rq_m <- cfa(cfa_rq_m, 
+                 data = dat_s,
+                 std.lv = TRUE, missing = "FIML",
+                 parameterization = "theta"
+                 )
+```
+
+<details>
+  <summary><strong>Click to see full model results:</strong></summary>
+```{r}
+summary(fit_rq_m, fit.measures = TRUE, standardized = TRUE)
+# modindices(fit_rq_m, sort = TRUE, maximum.number = 5)
+```
+</details>
+
+**Reliability:**
+
+The support subscale has good reliability, but abuse subscale seems to have poor reliability.
+```{r}
+semTools::compRelSEM(fit_rq_m)
+
+psych::alpha(dat_s |> select(rq1.1_1, rq2.1_1, rq4.1_1, rq8.1_1, rq9.1_1), check.keys = TRUE)$total$raw_alpha
+
+psych::alpha(dat_s |> select(rq3.1_1, rq5.1_1, rq6.1_1, rq7.1_1), check.keys = TRUE)$total$raw_alpha
+```
+  
+## Father's report on how mother behaves to him
+
+```{r}
+cfa_rq_f <- '
+  rq_support_f_1 =~ rq1.2_1 + rq2.2_1 + rq4.2_1 + rq8.2_1 + rq9.2_1
+  rq_abuse_f_1 =~ rq3.2_1 + rq5.2_1 + rq6.2_1 + rq7.2_1
+'
+
+fit_rq_f <- cfa(cfa_rq_f, 
+                 data = dat_s,
+                 std.lv = TRUE, missing = "FIML",
+                 parameterization = "theta"
+                 )
+```
+
+<details>
+  <summary><strong>Click to see full model results:</strong></summary>
+```{r}
+summary(fit_rq_f, fit.measures = TRUE, standardized = TRUE)
+# modindices(fit_rq_f, sort = TRUE, maximum.number = 5)
+```
+</details>
+
+**Reliability:**
+
+Both scales have acceptable reliability.
+
+```{r}
+semTools::compRelSEM(fit_rq_f)
+
+psych::alpha(dat_s |> select(rq1.2_1, rq2.2_1, rq4.2_1, rq8.2_1, rq9.2_1), check.keys = TRUE)$total$raw_alpha
+
+psych::alpha(dat_s |> select(rq3.2_1, rq5.2_1, rq6.2_1, rq7.2_1), check.keys = TRUE)$total$raw_alpha
+```
+  
+# CONFLICT TACTICS SCALE
+
+For this measure, the CFA models also failed to build due to highly skewed data. As suggested by Aaron, there are usually pairs items measuring the instance of behaviors of the same nature, and we can simply average the two item scores within each subscale:
+
+**\_self: I did ... to my partner.**
+
+**\_partner: My partner did ... to me**
+
+```{r, eval = F}
+"
+# compromise and show respect
+cts_compromise_self =~ cts1 + cts7
+cts_compromise_partner =~ cts2 + cts8
+
+# verbal abuse (and also destroy other's belonging)
+cts_verbal_abuse_self =~ cts3 + cts13
+cts_verbal_abuse_partner =~ cts4 + cts14
+
+# physical injury as a result of an argument/fight
+cts_injury_self =~ cts5 + cts15
+cts_injury_partner =~ cts6 + cts16
+
+# physical abuse
+cts_phyiscal_abuse_self =~ cts9 + cts11
+cts_phyiscal_abuse_partner =~ cts10 + cts12
+
+# sexual abuse
+cts_sex_abuse_self =~ cts17 + cts19
+cts_sex_abuse_partner =~ cts18 + cts20
+"
+```
+
+
