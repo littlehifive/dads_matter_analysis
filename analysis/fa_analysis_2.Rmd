@@ -73,8 +73,11 @@ library(lavaan)
 library(psych)
 source(here::here("R/functions.R"))
 
+# manually change this to the box path on your computer if using Windows
+box_path <- "~/Library/CloudStorage/Box-Box/Dads Matter Project"
+
 # load data
-dat_s <- read_csv(here::here("data/dads_matter_fa.csv"))
+dat_s <- read_csv(file.path(box_path, "Data analysis/data/dads_matter_fa.csv"))
 ```
 
 **\_m: mother report**
@@ -120,7 +123,6 @@ summary(fit_mfi_m, fit.measures = TRUE, standardized = TRUE)
 get_rel(model = fit_mfi_m,
         data = dat_s |> select(mfi1.1_2:mfi8.1_2))
 ```
-
 
 ## Mother's involvement with children (reported by mothers)
 
@@ -221,6 +223,15 @@ get_rel(model = fit_mfia_f,
         data = dat_s |> select(mfi1a.2_2:mfi8a.2_2))
 ```
 
+```{r, include = F}
+# generate factor scores
+
+dat_s <- get_fscore(fit_mfi_m, "mfi_fs_m_2", dat_s)
+dat_s <- get_fscore(fit_mfia_m, "mfia_fs_m_2", dat_s)
+dat_s <- get_fscore(fit_mfi_f, "mfi_fs_f_2", dat_s)
+dat_s <- get_fscore(fit_mfia_f, "mfia_fs_f_2", dat_s)
+```
+
 # PARENT-CHILD CONFLICT TACTICS SCALES
 
 Straus, M. A., Hamby, S. L., Finkelhor, D., Moore, D. W., & Runyan, D. (1998). Identification of child maltreatment with the Parent-Child Conflict Tactics Scales: Development and psychometric data for a national sample of American parents. Child abuse & neglect, 22(4), 249-270. https://doi.org/10.1016/S0145-2134(97)00174-9
@@ -242,11 +253,27 @@ dat_s <- dat_s |>
       TRUE     ~ .x
     ))
   )
+
+# create sum scores
+dat_s <- dat_s |> 
+  rowwise() |> 
+  mutate(pccts_sum_m_2 = sum(across(pccts3.1_2:pccts14.1_2), na.rm = T),
+         pccts_sum_f_2 = sum(across(pccts3.2_2:pccts14.2_2), na.rm = T))
+
 ```
 
 # CHILD NEGLECT
 
 For this measure, the CFA models also failed to build due to highly skewed data. Similar to PCCTS, we can take a sum of these variables as the total instances of child neglect, instead of treating it as a latent construct.
+
+```{r}
+# create sum scores
+dat_s <- dat_s |> 
+  rowwise() |> 
+  mutate(neg_sum_m_2 = sum(across(neg1.1_2:neg5.1_2), na.rm = T),
+         neg_sum_f_2 = sum(across(neg1.2_2:neg5.2_2), na.rm = T))
+```
+
 
 # DEPRESSION: CIDI-SF
 
@@ -264,7 +291,7 @@ This scale has conditional questions that prompt you to skip a few questions bas
 
 #zDysphoria
 dat_s <- dat_s %>% 
-  mutate(zDysphoria = ifelse(cidi1.1_2 == 1 & cidi2.1_2 < 4 & 
+  mutate(cidi_dysphoria_2 = ifelse(cidi1.1_2 == 1 & cidi2.1_2 < 4 & 
                                cidi3.1_2 < 3 & cidi4.1_2 == 1, 
                              1, 0))
 #AnhedoniaScale
@@ -281,11 +308,11 @@ dat_s <- dat_s %>% mutate(fac1 = ifelse(cidi5.1_2 == 1 & cidi6.1_2 < 3, 1, 0),
 
 #zAnhedonia
 dat_s <- dat_s %>% 
-  mutate(zAnhedonia = ifelse(AnhedoniaScale > 2, 1, 0))
+  mutate(cidi_anhedonia_2 = ifelse(AnhedoniaScale > 2, 1, 0))
 
 #zMajorDep
 dat_s <- dat_s %>% 
-  mutate(zMajorDep = ifelse(zDysphoria == 1 | zAnhedonia == 1, 1, 0))
+  mutate(cidi_majordep_2 = ifelse(cidi_dysphoria_2 == 1 | cidi_anhedonia_2 == 1, 1, 0))
 
 ```
 
@@ -644,6 +671,12 @@ psych::alpha(dat_s |> select(rq1.2_2, rq2.2_2, rq4.2_2, rq8.2_2, rq9.2_2), check
 
 psych::alpha(dat_s |> select(rq3.2_2, rq5.2_2, rq6.2_2, rq7.2_2), check.keys = TRUE)$total$raw_alpha
 ```
+
+```{r, include = F}
+# generate factor scores
+dat_s <- get_fscore(fit_rq_m, "rq_fs_m_2", dat_s)
+dat_s <- get_fscore(fit_rq_f, "rq_fs_f_2", dat_s)
+```
   
 # CONFLICT TACTICS SCALE
 
@@ -653,28 +686,55 @@ For this measure, the CFA models also failed to build due to highly skewed data.
 
 **\_partner: My partner did ... to me**
 
-```{r, eval = F}
-"
-# compromise and show respect
-cts_compromise_self =~ cts1 + cts7
-cts_compromise_partner =~ cts2 + cts8
+```{r}
+# create sum scores
+dat_s <- dat_s |> 
+  rowwise() |> 
+  mutate(
+    # compromise and show respect
+    cts_compromise_self_m_2 = sum(across(c(cts1.1_2, cts7.1_2)), na.rm = T),
+    cts_compromise_partner_m_2 = sum(across(c(cts2.1_2, cts8.1_2)), na.rm = T),
+    
+    # verbal abuse (and also destroy other's belonging)
+    cts_verbal_abuse_self_m_2 = sum(across(c(cts3.1_2, cts13.1_2)), na.rm = T),
+    cts_verbal_abuse_partner_m_2 = sum(across(c(cts4.1_2, cts14.1_2)), na.rm = T),
+    
+    # physical injury as a result of an argument/fight
+    cts_injury_self_m_2 = sum(across(c(cts5.1_2, cts15.1_2)), na.rm = T),
+    cts_injury_partner_m_2 = sum(across(c(cts6.1_2, cts16.1_2)), na.rm = T),
+    
+    # physical abuse
+    cts_phyiscal_abuse_self_m_2 = sum(across(c(cts9.1_2, cts11.1_2)), na.rm = T),
+    cts_phyiscal_abuse_partner_m_2 = sum(across(c(cts10.1_2, cts12.1_2)), na.rm = T),
+    
+    # sexual abuse
+    cts_sex_abuse_self_m_2 = sum(across(c(cts17.1_2, cts19.1_2)), na.rm = T),
+    cts_sex_abuse_partner_m_2 = sum(across(c(cts18.1_2, cts20.1_2)), na.rm = T)) |> 
+  
+  mutate(
+    # compromise and show respect
+    cts_compromise_self_f_2 = sum(across(c(cts1.2_2, cts7.2_2)), na.rm = T),
+    cts_compromise_partner_f_2 = sum(across(c(cts2.2_2, cts8.2_2)), na.rm = T),
+    
+    # verbal abuse (and also destroy other's belonging)
+    cts_verbal_abuse_self_f_2 = sum(across(c(cts3.2_2, cts13.2_2)), na.rm = T),
+    cts_verbal_abuse_partner_f_2 = sum(across(c(cts4.2_2, cts14.2_2)), na.rm = T),
+    
+    # physical injury as a result of an argument/fight
+    cts_injury_self_f_2 = sum(across(c(cts5.2_2, cts15.2_2)), na.rm = T),
+    cts_injury_partner_f_2 = sum(across(c(cts6.2_2, cts16.2_2)), na.rm = T),
+    
+    # physical abuse
+    cts_phyiscal_abuse_self_f_2 = sum(across(c(cts9.2_2, cts11.2_2)), na.rm = T),
+    cts_phyiscal_abuse_partner_f_2 = sum(across(c(cts10.2_2, cts12.2_2)), na.rm = T),
+    
+    # sexual abuse
+    cts_sex_abuse_self_f_2 = sum(across(c(cts17.2_2, cts19.2_2)), na.rm = T),
+    cts_sex_abuse_partner_f_2 = sum(across(c(cts18.2_2, cts20.2_2)), na.rm = T))
 
-# verbal abuse (and also destroy other's belonging)
-cts_verbal_abuse_self =~ cts3 + cts13
-cts_verbal_abuse_partner =~ cts4 + cts14
-
-# physical injury as a result of an argument/fight
-cts_injury_self =~ cts5 + cts15
-cts_injury_partner =~ cts6 + cts16
-
-# physical abuse
-cts_phyiscal_abuse_self =~ cts9 + cts11
-cts_phyiscal_abuse_partner =~ cts10 + cts12
-
-# sexual abuse
-cts_sex_abuse_self =~ cts17 + cts19
-cts_sex_abuse_partner =~ cts18 + cts20
-"
 ```
 
+```{r}
+write_csv(dat_s, file.path(box_path, "Data analysis/data/dads_matter_fa_comp.csv"))
+```
 

@@ -225,6 +225,15 @@ get_rel(model = fit_mfia_f,
         data = dat_s |> select(mfi1a.2_1:mfi8a.2_1))
 ```
 
+```{r, include = F}
+# generate factor scores
+
+dat_s <- get_fscore(fit_mfi_m, "mfi_fs_m_1", dat_s)
+dat_s <- get_fscore(fit_mfia_m, "mfia_fs_m_1", dat_s)
+dat_s <- get_fscore(fit_mfi_f, "mfi_fs_f_1", dat_s)
+dat_s <- get_fscore(fit_mfia_f, "mfia_fs_f_1", dat_s)
+```
+
 # PARENT-CHILD CONFLICT TACTICS SCALES
 
 Straus, M. A., Hamby, S. L., Finkelhor, D., Moore, D. W., & Runyan, D. (1998). Identification of child maltreatment with the Parent-Child Conflict Tactics Scales: Development and psychometric data for a national sample of American parents. Child abuse & neglect, 22(4), 249-270. https://doi.org/10.1016/S0145-2134(97)00174-9
@@ -246,11 +255,26 @@ dat_s <- dat_s |>
       TRUE     ~ .x
     ))
   )
+
+# create sum scores
+dat_s <- dat_s |> 
+  rowwise() |> 
+  mutate(pccts_sum_m_1 = sum(across(pccts3.1_1:pccts14.1_1), na.rm = T),
+         pccts_sum_f_1 = sum(across(pccts3.2_1:pccts14.2_1), na.rm = T))
 ```
 
 # CHILD NEGLECT
 
 For this measure, the CFA models also failed to build due to highly skewed data. I am not sure what the original paper is and what it suggests, but similar to PCCTS, we can take a sum of these variables as the total instances of child neglect, instead of treating it as a latent construct.
+
+```{r}
+# create sum scores
+dat_s <- dat_s |> 
+  rowwise() |> 
+  mutate(neg_sum_m_1 = sum(across(neg1.1_1:neg5.1_1), na.rm = T),
+         neg_sum_f_1 = sum(across(neg1.2_1:neg5.2_1), na.rm = T))
+```
+
 
 # DEPRESSION: CIDI-SF
 
@@ -261,6 +285,36 @@ According to the manual, there are two ways of scoring the scale: https://www.hc
 Kessler, R. C., Andrews, G., Mroczek, D., Ustun, B., & Wittchen, H. U. (1998). The World Health Organization composite international diagnostic interview short‐form (CIDI‐SF). International journal of methods in psychiatric research, 7(4), 171-185.
 
 But I am not sure why there are 13 items in our study. Past studies seem to suggest 6-item or 10-item versions.
+
+```{r, eval = F}
+#CIDI Scoring
+
+#zDysphoria
+dat_s <- dat_s %>% 
+  mutate(cidi_dysphoria_1 = ifelse(cidi1.1_1 == 1 & cidi2.1_1 < 4 & 
+                               cidi3.1_1 < 3 & cidi4.1_1 == 1, 
+                             1, 0))
+#AnhedoniaScale
+dat_s <- dat_s %>% mutate(fac1 = ifelse(cidi5.1_1 == 1 & cidi6.1_1 < 3, 1, 0),
+                          fac2 = ifelse(cidi7.1_1 < 3, 1, 0),
+                          fac3 = ifelse(cidi8.1_1 == 1, 1, 0),
+                          fac4 = ifelse(cidi9.1_1 < 4 & cidi9a.1_1 > 9, 1, 0),
+                          fac5 = ifelse(cidi10.1_1 == 1 & cidi10a.1_1 < 3, 1, 0),
+                          fac6 = ifelse(cidi11.1_1 == 1, 1, 0),
+                          fac7 = ifelse(cidi12.1_1 == 1, 1, 0),
+                          fac8 = ifelse(cidi13.1_1 == 1, 1, 0)) %>%
+  rowwise() %>%
+  mutate(AnhedoniaScale = sum(fac1, fac2, fac3, fac4, fac5, fac6, fac7, fac8, na.rm = TRUE))
+
+#zAnhedonia
+dat_s <- dat_s %>% 
+  mutate(cidi_anhedonia_1 = ifelse(AnhedoniaScale > 2, 1, 0))
+
+#zMajorDep
+dat_s <- dat_s %>% 
+  mutate(cidi_majordep_1 = ifelse(cidi_dysphoria_1 == 1 | cidi_anhedonia_1 == 1, 1, 0))
+
+```
 
 # PARENTING ALLIANCE INVENTORY
 
@@ -488,6 +542,12 @@ psych::alpha(dat_s |> select(rq1.2_1, rq2.2_1, rq4.2_1, rq8.2_1, rq9.2_1), check
 psych::alpha(dat_s |> select(rq3.2_1, rq5.2_1, rq6.2_1, rq7.2_1), check.keys = TRUE)$total$raw_alpha
 ```
   
+```{r, include = F}
+# generate factor scores
+dat_s <- get_fscore(fit_rq_m, "rq_fs_m_1", dat_s)
+dat_s <- get_fscore(fit_rq_f, "rq_fs_f_1", dat_s)
+```
+
 # CONFLICT TACTICS SCALE
 
 For this measure, the CFA models also failed to build due to highly skewed data. As suggested by Aaron, there are usually pairs items measuring the instance of behaviors of the same nature, and we can simply average the two item scores within each subscale:
@@ -496,28 +556,50 @@ For this measure, the CFA models also failed to build due to highly skewed data.
 
 **\_partner: My partner did ... to me**
 
-```{r, eval = F}
-"
-# compromise and show respect
-cts_compromise_self =~ cts1 + cts7
-cts_compromise_partner =~ cts2 + cts8
+```{r}
+# create sum scores
+dat_s <- dat_s |> 
+  rowwise() |> 
+  mutate(
+    # compromise and show respect
+    cts_compromise_self_m_1 = sum(across(c(cts1.1_1, cts7.1_1)), na.rm = T),
+    cts_compromise_partner_m_1 = sum(across(c(cts2.1_1, cts8.1_1)), na.rm = T),
+    
+    # verbal abuse (and also destroy other's belonging)
+    cts_verbal_abuse_self_m_1 = sum(across(c(cts3.1_1, cts13.1_1)), na.rm = T),
+    cts_verbal_abuse_partner_m_1 = sum(across(c(cts4.1_1, cts14.1_1)), na.rm = T),
+    
+    # physical injury as a result of an argument/fight
+    cts_injury_self_m_1 = sum(across(c(cts5.1_1, cts15.1_1)), na.rm = T),
+    cts_injury_partner_m_1 = sum(across(c(cts6.1_1, cts16.1_1)), na.rm = T),
+    
+    # physical abuse
+    cts_phyiscal_abuse_self_m_1 = sum(across(c(cts9.1_1, cts11.1_1)), na.rm = T),
+    cts_phyiscal_abuse_partner_m_1 = sum(across(c(cts10.1_1, cts12.1_1)), na.rm = T),
+    
+    # sexual abuse
+    cts_sex_abuse_self_m_1 = sum(across(c(cts17.1_1, cts19.1_1)), na.rm = T),
+    cts_sex_abuse_partner_m_1 = sum(across(c(cts18.1_1, cts20.1_1)), na.rm = T)) |> 
+  
+  mutate(
+    # compromise and show respect
+    cts_compromise_self_f_1 = sum(across(c(cts1.2_1, cts7.2_1)), na.rm = T),
+    cts_compromise_partner_f_1 = sum(across(c(cts2.2_1, cts8.2_1)), na.rm = T),
+    
+    # verbal abuse (and also destroy other's belonging)
+    cts_verbal_abuse_self_f_1 = sum(across(c(cts3.2_1, cts13.2_1)), na.rm = T),
+    cts_verbal_abuse_partner_f_1 = sum(across(c(cts4.2_1, cts14.2_1)), na.rm = T),
+    
+    # physical injury as a result of an argument/fight
+    cts_injury_self_f_1 = sum(across(c(cts5.2_1, cts15.2_1)), na.rm = T),
+    cts_injury_partner_f_1 = sum(across(c(cts6.2_1, cts16.2_1)), na.rm = T),
+    
+    # physical abuse
+    cts_phyiscal_abuse_self_f_1 = sum(across(c(cts9.2_1, cts11.2_1)), na.rm = T),
+    cts_phyiscal_abuse_partner_f_1 = sum(across(c(cts10.2_1, cts12.2_1)), na.rm = T),
+    
+    # sexual abuse
+    cts_sex_abuse_self_f_1 = sum(across(c(cts17.2_1, cts19.2_1)), na.rm = T),
+    cts_sex_abuse_partner_f_1 = sum(across(c(cts18.2_1, cts20.2_1)), na.rm = T))
 
-# verbal abuse (and also destroy other's belonging)
-cts_verbal_abuse_self =~ cts3 + cts13
-cts_verbal_abuse_partner =~ cts4 + cts14
-
-# physical injury as a result of an argument/fight
-cts_injury_self =~ cts5 + cts15
-cts_injury_partner =~ cts6 + cts16
-
-# physical abuse
-cts_phyiscal_abuse_self =~ cts9 + cts11
-cts_phyiscal_abuse_partner =~ cts10 + cts12
-
-# sexual abuse
-cts_sex_abuse_self =~ cts17 + cts19
-cts_sex_abuse_partner =~ cts18 + cts20
-"
 ```
-
-

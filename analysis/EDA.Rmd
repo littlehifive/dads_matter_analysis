@@ -1,0 +1,69 @@
+---
+title: "Exploratory Data Analysis"
+author: "Michael Wu"
+date: "2023-11-30"
+output: 
+  html_document:
+    number_sections: true
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+      toc_selector: "#toc"
+      width: 300px
+      align: left
+    css: styles.css
+---
+
+<style>
+body {
+  font-size: 16px;
+}
+</style>
+
+```{r}
+# load library
+library(tidyverse)
+library(DataExplorer)
+source(here::here("R/functions.R"))
+
+# manually change this to the box path on your computer if using Windows
+box_path <- "~/Library/CloudStorage/Box-Box/Dads Matter Project"
+
+# load data
+dat_f <- read_csv(file.path(box_path, "Data analysis/data/dads_matter_fa_comp.csv")) |> select(mfi_fs_m_1:cidi_dysphoria_1, cidi_anhedonia_1:cts_sex_abuse_partner_f_2)
+```
+
+```{r}
+dat_f %>%
+  select(ends_with("_1")) |> 
+    create_report(
+        output_dir = "analysis",
+        output_file = "EDA_report_T1.html",
+        report_title = "EDA Report"
+    )
+
+dat_f %>%
+  select(ends_with("_2")) |> 
+    create_report(
+        output_dir = "analysis",
+        output_file = "EDA_report_T2.html",
+        report_title = "EDA Report"
+    )
+
+```
+
+```{r}
+cor_1 <- corstarsl(dat_f %>%
+  select(ends_with("_1"))) |> as.data.frame()
+
+write.csv(cor_1, file.path(box_path, "Data analysis/data/cor_mat_1.csv"))
+
+cor_2 <- corstarsl(dat_f %>%
+  select(ends_with("_2"))) |> as.data.frame()
+
+write.csv(cor_2, file.path(box_path, "Data analysis/data/cor_mat_2.csv"))
+
+```
+
+
