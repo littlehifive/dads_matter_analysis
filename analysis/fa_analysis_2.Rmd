@@ -674,8 +674,18 @@ psych::alpha(dat_s |> select(rq3.2_2, rq5.2_2, rq6.2_2, rq7.2_2), check.keys = T
 
 ```{r, include = F}
 # generate factor scores
-dat_s <- get_fscore(fit_rq_m, "rq_fs_m_2", dat_s)
-dat_s <- get_fscore(fit_rq_f, "rq_fs_f_2", dat_s)
+pred <- lavaan::lavPredict(fit_rq_m)
+index <- lavaan::inspect(fit_rq_m, "case.idx")
+  
+dat_s[index, "rq_support_m_2"] <- pred[,1]
+dat_s[index, "rq_abuse_m_2"] <- pred[,2]
+
+
+pred <- lavaan::lavPredict(fit_rq_f)
+index <- lavaan::inspect(fit_rq_f, "case.idx")
+  
+dat_s[index, "rq_support_f_2"] <- pred[,1]
+dat_s[index, "rq_abuse_f_2"] <- pred[,2]
 ```
   
 # CONFLICT TACTICS SCALE
@@ -735,6 +745,8 @@ dat_s <- dat_s |>
 ```
 
 ```{r}
+dat_s <- dat_s |> select(mfi_fs_m_1:cidi_dysphoria_1, cidi_anhedonia_1:cts_sex_abuse_partner_f_2)
+
 write_csv(dat_s, file.path(box_path, "Data analysis/data/dads_matter_fa_comp.csv"))
 ```
 

@@ -31,7 +31,7 @@ source(here::here("R/functions.R"))
 box_path <- "~/Library/CloudStorage/Box-Box/Dads Matter Project"
 
 # load data
-dat_f <- read_csv(file.path(box_path, "Data analysis/data/dads_matter_fa_comp.csv")) |> select(mfi_fs_m_1:cidi_dysphoria_1, cidi_anhedonia_1:cts_sex_abuse_partner_f_2)
+dat_f <- read_csv(file.path(box_path, "Data analysis/data/dads_matter_fa_comp.csv"))
 ```
 
 ```{r}
@@ -40,7 +40,7 @@ dat_f %>%
     create_report(
         output_dir = "analysis",
         output_file = "EDA_report_T1.html",
-        report_title = "EDA Report"
+        report_title = "EDA Report T1"
     )
 
 dat_f %>%
@@ -48,7 +48,7 @@ dat_f %>%
     create_report(
         output_dir = "analysis",
         output_file = "EDA_report_T2.html",
-        report_title = "EDA Report"
+        report_title = "EDA Report T2"
     )
 
 ```
