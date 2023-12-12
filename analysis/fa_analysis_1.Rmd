@@ -259,8 +259,10 @@ dat_s <- dat_s |>
 # create sum scores
 dat_s <- dat_s |> 
   rowwise() |> 
-  mutate(pccts_sum_m_1 = sum(across(pccts3.1_1:pccts14.1_1), na.rm = T),
-         pccts_sum_f_1 = sum(across(pccts3.2_1:pccts14.2_1), na.rm = T))
+  mutate(pccts_psy_sum_m_1 = sum(across(c(pccts6.1_1, pccts8.1_1, pccts10.1_1, pccts12.1_1, pccts14.1_1)), na.rm = T),
+         pccts_phy_sum_m_1 = sum(across(c(pccts3.1_1, pccts4.1_1, pccts7.1_1, pccts11.1_1, pccts13.1_1)), na.rm = T),
+         pccts_psy_sum_f_1 = sum(across(c(pccts6.2_1, pccts8.2_1, pccts10.2_1, pccts12.2_1, pccts14.2_1)), na.rm = T),
+         pccts_phy_sum_f_1 = sum(across(c(pccts3.2_1, pccts4.2_1, pccts7.2_1, pccts11.2_1, pccts13.2_1)), na.rm = T))
 ```
 
 # CHILD NEGLECT
@@ -287,11 +289,11 @@ Kessler, R. C., Andrews, G., Mroczek, D., Ustun, B., & Wittchen, H. U. (1998). T
 But I am not sure why there are 13 items in our study. Past studies seem to suggest 6-item or 10-item versions.
 
 ```{r, eval = F}
-#CIDI Scoring
+#CIDI Scoring Mother
 
 #zDysphoria
 dat_s <- dat_s %>% 
-  mutate(cidi_dysphoria_1 = ifelse(cidi1.1_1 == 1 & cidi2.1_1 < 4 & 
+  mutate(cidi_dysphoria_m_1 = ifelse(cidi1.1_1 == 1 & cidi2.1_1 < 4 & 
                                cidi3.1_1 < 3 & cidi4.1_1 == 1, 
                              1, 0))
 #AnhedoniaScale
@@ -304,16 +306,43 @@ dat_s <- dat_s %>% mutate(fac1 = ifelse(cidi5.1_1 == 1 & cidi6.1_1 < 3, 1, 0),
                           fac7 = ifelse(cidi12.1_1 == 1, 1, 0),
                           fac8 = ifelse(cidi13.1_1 == 1, 1, 0)) %>%
   rowwise() %>%
-  mutate(AnhedoniaScale = sum(fac1, fac2, fac3, fac4, fac5, fac6, fac7, fac8, na.rm = TRUE))
+  mutate(AnhedoniaScale_m = sum(fac1, fac2, fac3, fac4, fac5, fac6, fac7, fac8, na.rm = TRUE))
 
 #zAnhedonia
 dat_s <- dat_s %>% 
-  mutate(cidi_anhedonia_1 = ifelse(AnhedoniaScale > 2, 1, 0))
+  mutate(cidi_anhedonia_m_1 = ifelse(AnhedoniaScale_m > 2, 1, 0))
 
 #zMajorDep
 dat_s <- dat_s %>% 
-  mutate(cidi_majordep_1 = ifelse(cidi_dysphoria_1 == 1 | cidi_anhedonia_1 == 1, 1, 0))
+  mutate(cidi_majordep_m_1 = ifelse(cidi_dysphoria_m_1 == 1 | cidi_anhedonia_m_1 == 1, 1, 0))
 
+
+#CIDI Scoring Father
+
+#zDysphoria
+dat_s <- dat_s %>% 
+  mutate(cidi_dysphoria_f_1 = ifelse(cidi1.2_1 == 1 & cidi2.2_1 < 4 & 
+                               cidi3.2_1 < 3 & cidi4.2_1 == 1, 
+                             1, 0))
+#AnhedoniaScale
+dat_s <- dat_s %>% mutate(fac1 = ifelse(cidi5.2_1 == 1 & cidi6.2_1 < 3, 1, 0),
+                          fac2 = ifelse(cidi7.2_1 < 3, 1, 0),
+                          fac3 = ifelse(cidi8.2_1 == 1, 1, 0),
+                          fac4 = ifelse(cidi9.2_1 < 4 & cidi9a.2_1 > 9, 1, 0),
+                          fac5 = ifelse(cidi10.2_1 == 1 & cidi10a.2_1 < 3, 1, 0),
+                          fac6 = ifelse(cidi11.2_1 == 1, 1, 0),
+                          fac7 = ifelse(cidi12.2_1 == 1, 1, 0),
+                          fac8 = ifelse(cidi13.2_1 == 1, 1, 0)) %>%
+  rowwise() %>%
+  mutate(AnhedoniaScale_f = sum(fac1, fac2, fac3, fac4, fac5, fac6, fac7, fac8, na.rm = TRUE))
+
+#zAnhedonia
+dat_s <- dat_s %>% 
+  mutate(cidi_anhedonia_f_1 = ifelse(AnhedoniaScale_f > 2, 1, 0))
+
+#zMajorDep
+dat_s <- dat_s %>% 
+  mutate(cidi_majordep_f_1 = ifelse(cidi_dysphoria_f_1 == 1 | cidi_anhedonia_f_1 == 1, 1, 0))
 ```
 
 # PARENTING ALLIANCE INVENTORY

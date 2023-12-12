@@ -257,8 +257,10 @@ dat_s <- dat_s |>
 # create sum scores
 dat_s <- dat_s |> 
   rowwise() |> 
-  mutate(pccts_sum_m_2 = sum(across(pccts3.1_2:pccts14.1_2), na.rm = T),
-         pccts_sum_f_2 = sum(across(pccts3.2_2:pccts14.2_2), na.rm = T))
+  mutate(pccts_psy_sum_m_2 = sum(across(c(pccts6.1_2, pccts8.1_2, pccts10.1_2, pccts12.1_2, pccts14.1_2)), na.rm = T),
+         pccts_phy_sum_m_2 = sum(across(c(pccts3.1_2, pccts4.1_2, pccts7.1_2, pccts11.1_2, pccts13.1_2)), na.rm = T),
+         pccts_psy_sum_f_2 = sum(across(c(pccts6.2_2, pccts8.2_2, pccts10.2_2, pccts12.2_2, pccts14.2_2)), na.rm = T),
+         pccts_phy_sum_f_2 = sum(across(c(pccts3.2_2, pccts4.2_2, pccts7.2_2, pccts11.2_2, pccts13.2_2)), na.rm = T))
 
 ```
 
@@ -287,11 +289,11 @@ This scale has conditional questions that prompt you to skip a few questions bas
 | zMajorDepression_f | MD indicated if either zDysphoria OR zAnhedonia is a 1     |
 
 ```{r, eval = F}
-#CIDI Scoring
+#CIDI Scoring Mother
 
 #zDysphoria
 dat_s <- dat_s %>% 
-  mutate(cidi_dysphoria_2 = ifelse(cidi1.1_2 == 1 & cidi2.1_2 < 4 & 
+  mutate(cidi_dysphoria_m_2 = ifelse(cidi1.1_2 == 1 & cidi2.1_2 < 4 & 
                                cidi3.1_2 < 3 & cidi4.1_2 == 1, 
                              1, 0))
 #AnhedoniaScale
@@ -304,15 +306,42 @@ dat_s <- dat_s %>% mutate(fac1 = ifelse(cidi5.1_2 == 1 & cidi6.1_2 < 3, 1, 0),
                           fac7 = ifelse(cidi12.1_2 == 1, 1, 0),
                           fac8 = ifelse(cidi13.1_2 == 1, 1, 0)) %>%
   rowwise() %>%
-  mutate(AnhedoniaScale = sum(fac1, fac2, fac3, fac4, fac5, fac6, fac7, fac8, na.rm = TRUE))
+  mutate(AnhedoniaScale_m = sum(fac1, fac2, fac3, fac4, fac5, fac6, fac7, fac8, na.rm = TRUE))
 
 #zAnhedonia
 dat_s <- dat_s %>% 
-  mutate(cidi_anhedonia_2 = ifelse(AnhedoniaScale > 2, 1, 0))
+  mutate(cidi_anhedonia_m_2 = ifelse(AnhedoniaScale_m > 2, 1, 0))
 
 #zMajorDep
 dat_s <- dat_s %>% 
-  mutate(cidi_majordep_2 = ifelse(cidi_dysphoria_2 == 1 | cidi_anhedonia_2 == 1, 1, 0))
+  mutate(cidi_majordep_m_2 = ifelse(cidi_dysphoria_m_2 == 1 | cidi_anhedonia_m_2 == 1, 1, 0))
+
+#CIDI Scoring Father
+
+#zDysphoria
+dat_s <- dat_s %>% 
+  mutate(cidi_dysphoria_f_2 = ifelse(cidi1.2_2 == 1 & cidi2.2_2 < 4 & 
+                               cidi3.2_2 < 3 & cidi4.2_2 == 1, 
+                             1, 0))
+#AnhedoniaScale
+dat_s <- dat_s %>% mutate(fac1 = ifelse(cidi5.2_2 == 1 & cidi6.2_2 < 3, 1, 0),
+                          fac2 = ifelse(cidi7.2_2 < 3, 1, 0),
+                          fac3 = ifelse(cidi8.2_2 == 1, 1, 0),
+                          fac4 = ifelse(cidi9.2_2 < 4 & cidi9a.2_2 > 9, 1, 0),
+                          fac5 = ifelse(cidi10.2_2 == 1 & cidi10a.2_2 < 3, 1, 0),
+                          fac6 = ifelse(cidi11.2_2 == 1, 1, 0),
+                          fac7 = ifelse(cidi12.2_2 == 1, 1, 0),
+                          fac8 = ifelse(cidi13.2_2 == 1, 1, 0)) %>%
+  rowwise() %>%
+  mutate(AnhedoniaScale_f = sum(fac1, fac2, fac3, fac4, fac5, fac6, fac7, fac8, na.rm = TRUE))
+
+#zAnhedonia
+dat_s <- dat_s %>% 
+  mutate(cidi_anhedonia_f_2 = ifelse(AnhedoniaScale_f > 2, 1, 0))
+
+#zMajorDep
+dat_s <- dat_s %>% 
+  mutate(cidi_majordep_f_2 = ifelse(cidi_dysphoria_f_2 == 1 | cidi_anhedonia_f_2 == 1, 1, 0))
 
 ```
 
@@ -745,7 +774,15 @@ dat_s <- dat_s |>
 ```
 
 ```{r}
-dat_s <- dat_s |> select(mfi_fs_m_1:cidi_dysphoria_1, cidi_anhedonia_1:cts_sex_abuse_partner_f_2)
+dat_s <- dat_s |> select(
+  c_overall_z_1:total_recording_hours_night_1,
+  
+  mfi_fs_m_1:cidi_dysphoria_m_1, cidi_anhedonia_m_1:cts_sex_abuse_partner_f_1,
+
+  c_overall_z_2:total_recording_hours_night_2,
+  
+  mfi_fs_m_2:cts_sex_abuse_partner_f_2
+)
 
 write_csv(dat_s, file.path(box_path, "Data analysis/data/dads_matter_fa_comp.csv"))
 ```

@@ -21,6 +21,10 @@ body {
 }
 </style>
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+```
+
 ```{r}
 # load library
 library(tidyverse)
@@ -35,35 +39,49 @@ dat_f <- read_csv(file.path(box_path, "Data analysis/data/dads_matter_fa_comp.cs
 ```
 
 ```{r}
-dat_f %>%
-  select(ends_with("_1")) |> 
+dat_f |> 
+  select(ends_with("_1") & !starts_with("cts_")) |>
     create_report(
         output_dir = "analysis",
         output_file = "EDA_report_T1.html",
-        report_title = "EDA Report T1"
+        report_title = "EDA Report T1",
+        config = configure_report(add_plot_str = F,
+                                  add_plot_qq = F,
+                                  add_plot_bar = F,
+                                  add_plot_prcomp = F,
+                                  plot_histogram_args = list(nrow = 6,
+                                                             ncol = 7,
+                                                             binary_as_factor = F)
+                                  )
     )
 
 dat_f %>%
-  select(ends_with("_2")) |> 
+  select(ends_with("_2") & !starts_with("cts_")) |>
     create_report(
         output_dir = "analysis",
         output_file = "EDA_report_T2.html",
-        report_title = "EDA Report T2"
+        report_title = "EDA Report T2",
+        config = configure_report(add_plot_str = F,
+                                  add_plot_qq = F,
+                                  add_plot_bar = F,
+                                  add_plot_prcomp = F,
+                                  plot_histogram_args = list(nrow = 6,
+                                                             ncol = 7,
+                                                             binary_as_factor = F)
+                                  )
     )
 
 ```
 
 ```{r}
 cor_1 <- corstarsl(dat_f %>%
-  select(ends_with("_1"))) |> as.data.frame()
+  select(ends_with("_1") & !starts_with("cts_"))) |> as.data.frame()
 
 write.csv(cor_1, file.path(box_path, "Data analysis/data/cor_mat_1.csv"))
 
 cor_2 <- corstarsl(dat_f %>%
-  select(ends_with("_2"))) |> as.data.frame()
+  select(ends_with("_2") & !starts_with("cts_"))) |> as.data.frame()
 
 write.csv(cor_2, file.path(box_path, "Data analysis/data/cor_mat_2.csv"))
 
 ```
-
-

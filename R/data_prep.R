@@ -48,7 +48,7 @@ dat_s <- dat |>
     matches("^cidi\\d+a?\\.1_\\d+$"), 
     
     # Father's self-report depression
-    matches("^cidi\\d+a?\\.1_\\d+$"), 
+    matches("^cidi\\d+a?\\.2_\\d+$"), 
     
     # ---- 5. PARENTING ALLIANCE INVENTORY ----
     
@@ -72,9 +72,17 @@ dat_s <- dat |>
     matches("^cts\\d+\\.1_\\d+$"), 
     
     # Father's report on conflict tactics between parents
-    matches("^cts\\d+\\.2_\\d+$")
+    matches("^cts\\d+\\.2_\\d+$"),
     
+    # ---- 8. Ages & Stages Questionnaires ----
+    matches("overall_z_\\d+$"),
+    
+    # ---- 9. ADEX ----
+    matches("\\d+_day$"),
+    matches("\\d+_night$")
   ) |> 
+  rename_with(.fn = function(x){gsub("(\\d+)_day", "day_\\1", x)}) |> 
+  rename_with(.fn = function(x){gsub("(\\d+)_night", "night_\\1", x)}) |> 
   # reorder variables by wave
   select(
     matches("_1$"),
