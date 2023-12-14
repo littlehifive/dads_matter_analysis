@@ -36,11 +36,14 @@ box_path <- "~/Library/CloudStorage/Box-Box/Dads Matter Project"
 
 # load data
 dat_f <- read_csv(file.path(box_path, "Data analysis/data/dads_matter_fa_comp.csv"))
+
+dat_f_1 <- dat_f |> select(ends_with("_1") & !starts_with("cts_"))
+dat_f_2 <- dat_f |> select(ends_with("_2") & !starts_with("cts_"))
+
 ```
 
 ```{r}
-dat_f |> 
-  select(ends_with("_1") & !starts_with("cts_")) |>
+dat_f_1 |>
     create_report(
         output_dir = "analysis",
         output_file = "EDA_report_T1.html",
@@ -55,8 +58,7 @@ dat_f |>
                                   )
     )
 
-dat_f %>%
-  select(ends_with("_2") & !starts_with("cts_")) |>
+dat_f_2 |>
     create_report(
         output_dir = "analysis",
         output_file = "EDA_report_T2.html",
@@ -74,14 +76,29 @@ dat_f %>%
 ```
 
 ```{r}
-cor_1 <- corstarsl(dat_f %>%
-  select(ends_with("_1") & !starts_with("cts_"))) |> as.data.frame()
+cor_1 <- corstarsl(dat_f_1) |> as.data.frame()
 
 write.csv(cor_1, file.path(box_path, "Data analysis/data/cor_mat_1.csv"))
 
-cor_2 <- corstarsl(dat_f %>%
-  select(ends_with("_2") & !starts_with("cts_"))) |> as.data.frame()
+cor_2 <- corstarsl(dat_f_2) |> as.data.frame()
 
 write.csv(cor_2, file.path(box_path, "Data analysis/data/cor_mat_2.csv"))
 
 ```
+
+```{r}
+library(naniar)
+vis_miss(dat_f_1) + theme(axis.text.x = element_text(angle=80))
+vis_miss(dat_f_2) + theme(axis.text.x = element_text(angle=80))
+
+gg_miss_upset(dat_f_1, nsets = 10)
+gg_miss_upset(dat_f_2, nsets = 10)
+
+gg_miss_upset(dat_f |> select(c_overall_z_1:pers_overall_z_1))
+gg_miss_upset(dat_f |> select(mfi_fs_m_1:cts_sex_abuse_partner_f_1), nsets = 10)
+
+gg_miss_upset(dat_f |> select(c_overall_z_2:pers_overall_z_2))
+gg_miss_upset(dat_f |> select(mfi_fs_m_2:cts_sex_abuse_partner_f_2), nsets = 10)
+
+```
+
